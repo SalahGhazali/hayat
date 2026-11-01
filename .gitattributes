@@ -1,0 +1,2 @@
+# Keep original third-party distributions intact, including license formatting.
+assets/vendor/** -whitespace
