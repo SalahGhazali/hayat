@@ -1,0 +1,23 @@
+{
+  "name": "hayat-frontend-mvp",
+  "private": true,
+  "version": "0.2.0",
+  "description": "Arabic RTL frontend prototype built with Tabler UI",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test tests/store.test.cjs",
+    "test:browser": "node tests/browser.mjs",
+    "test:logout": "node tests/logout.mjs",
+    "test:completion": "node tests/completion.mjs",
+    "test:commitment": "node tests/commitment.mjs",
+    "test:alignment": "node tests/alignment.mjs"
+  },
+  "devDependencies": {
+    "@fontsource/cairo": "5.3.0",
+    "aos": "2.3.4",
+    "chart.js": "4.4.9",
+    "countup.js": "2.8.2",
+    "playwright": "1.64.1",
+    "sweetalert2": "11.17.2"
+  }
+}
