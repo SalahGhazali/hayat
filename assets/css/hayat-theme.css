@@ -16,7 +16,7 @@
   --tblr-success: #0f766e;
   --tblr-success-rgb: 15,118,110;
   --hayat-soft: #f5f7f9;
-  --hayat-muted: #637184;
+  --hayat-muted: #526175;
 }
 
 html,body { background:#fff!important; min-width:0; }
@@ -80,11 +80,24 @@ a { text-underline-offset:4px; }
 .form-alert { display:none; }
 .form-alert.visible { display:flex; gap:9px; background:#fff4f4; color:#a91d2a; border:1px solid #f5d8db; border-radius:12px; padding:13px 15px; margin-bottom:18px; font-size:.83rem; }
 .form-alert.info,.form-alert.success { background:#f0f8f6; color:#0f766e; border-color:#d4e9e3; }
-.card { border-color:#e7ebef; border-radius:16px; box-shadow:0 2px 6px #24364d03; }
+.card {
+  --hayat-panel-bg:#eaf5ef;
+  --hayat-panel-border:#c9e0d2;
+  --tblr-card-bg:var(--hayat-panel-bg);
+  background-color:var(--hayat-panel-bg);
+  border-color:var(--hayat-panel-border);
+  border-radius:16px;
+  box-shadow:0 2px 6px #24364d03;
+}
+.row-cards>.col-6:nth-child(4n+1)>.card { --hayat-panel-bg:#fff1f2; --hayat-panel-border:#edcbd0; }
+.row-cards>.col-6:nth-child(4n+3)>.card { --hayat-panel-bg:#fff6e6; --hayat-panel-border:#e8d9b9; }
+.row-cards>.col-6:nth-child(4n)>.card { --hayat-panel-bg:#edf3fa; --hayat-panel-border:#d1ddeb; }
 .card-title { font-weight:750; font-size:1rem; }
-.card-header { min-height:70px; padding:18px 22px; border-color:#edf0f3; }
+.card-header { min-height:70px; padding:18px 22px; border-color:var(--hayat-panel-border); background:transparent; }
 .card-body { padding:22px; }
-.card-footer { background:#fff; border-color:#edf0f3; padding:16px 22px; }
+.card-footer { background:transparent; border-color:var(--hayat-panel-border); padding:16px 22px; }
+.card .table { --tblr-table-bg:#fff; background:#fff; }
+.card .table thead { background:#f2f6f3; }
 .avatar { border-radius:11px; box-shadow:none; }
 .badge { border-radius:7px; padding:5px 9px; letter-spacing:0; font-size:.72rem; font-weight:650; line-height:1.5; }
 .blood-avatar { background:#fff3f3; color:#a91d2a; border:0; }
@@ -121,7 +134,9 @@ a { text-underline-offset:4px; }
 .soft-section { background:#f8fafb; border-block:1px solid #f1f3f5; }
 .step-number { font-family:Arial,sans-serif; font-weight:750; color:#a91d2a; }
 .accordion { border-radius:16px; overflow:hidden; }
-.accordion-button { min-height:64px; font-weight:650; font-size:.9rem; padding:18px 22px; }
+.accordion-item { background:#eaf5ef; border-color:#c9e0d2; }
+.accordion-button { min-height:64px; font-weight:650; font-size:.9rem; padding:18px 22px; background:#eaf5ef; color:#233143; }
+.accordion-button:not(.collapsed) { background:#fff1f2; color:#a91d2a; }
 
 /* Authentication uses Tabler's two-column cover structure with a quieter form. */
 .auth-section { padding:48px 0 64px; }
@@ -282,12 +297,21 @@ a { text-underline-offset:4px; }
 }
 @media(prefers-reduced-motion:reduce) { *,*:before,*:after { animation:none!important; scroll-behavior:auto!important; transition:none!important; } }
 @media print {
+  .card,.card-header,.card-footer { background:#fff!important; }
   .dashboard-sidebar,.app-topbar,.demo-strip,.data-toolbar,.btn,.public-header,.public-footer { display:none!important; }
   .page-wrapper { margin:0!important; }
   .card { break-inside:avoid; box-shadow:none; }
   .table-responsive { overflow:visible; }
 }
 [hidden] { display:none!important; }
+
+@media (forced-colors:active) {
+  .card,.card-header,.card-footer,.accordion-item,.accordion-button,.accordion-button:not(.collapsed) {
+    background:Canvas;
+    color:CanvasText;
+    border-color:CanvasText;
+  }
+}
 
 /* Local library integrations; no initial hidden content when scripts fail. */
 html:not(.js-motion) [data-aos] { opacity:1!important; transform:none!important; pointer-events:auto!important; }

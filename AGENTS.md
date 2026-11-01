@@ -147,6 +147,7 @@ Runs on a plain static server with no backend/DB · every listed screen and jour
 
 
 ## 15. Owner refinements retained from the active review
+- Owner's latest surface review requests colored containers instead of uniform white: use soft rose, mint and warm neutral card surfaces with readable dark text; keep the page's white base and the fixed Home decoration. Login now uses the locally licensed direct donation photo instead of the hands photo.
 - Latest Home visual request explicitly allows a decorative blood-donation background fixed to the viewport while scrolling, and replaces the Home hands photo with a direct donation photo. Scope this exception to `body[data-page="home"]`; preserve legibility and forced-colors support. This supersedes the earlier plain Home background restriction, without adding parallax animation.
 - Latest explicit logout review uses direct login redirect + one-shot3second Tabler toast, with confirmation. The older generic logout-success-screen wording above is fulfilled through that approved feedback flow. Preserve the legacy logout URL without logging out a currently active user.
 - A donor has one ongoing accepted coordination. Hide other calls without deleting them; allow explicit withdrawal. Personal coordination does not close the institution-wide request or award points. Preserve ended coordination after donation correction.

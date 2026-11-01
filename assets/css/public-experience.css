@@ -31,7 +31,15 @@ body[data-page="home"] .hero-image-panel img { object-position:center; }
 .hero-image-panel figcaption span { font-size:.8rem; color:#fff; }
 .hero-image-panel .image-label { position:absolute; top:20px; inset-inline-start:20px; color:#fff; background:#143d3b; padding:7px 12px; border-radius:8px; font-size:.73rem; z-index:1; }
 .home-stats { padding:0 0 54px; }
-.home-stats .card { border-color:#dfe8e5; }
+.home-stats .card { border-color:#d1dfd7; background:#f3f7f4; }
+.home-stats .col-md-4:nth-child(1) .home-stat { background:#fff1f2; }
+.home-stats .col-md-4:nth-child(2) .home-stat { background:#eaf5ef; }
+.home-stats .col-md-4:nth-child(3) .home-stat { background:#fff6e6; }
+body[data-page="home"] #features .col-md-4:nth-child(1) .card,
+body[data-page="home"] #how .col-md-4:nth-child(1) .card,
+body[data-page="home"] #roles .col-md-6:nth-child(1) .card { --hayat-panel-bg:#fff1f2; --hayat-panel-border:#edcbd0; }
+body[data-page="home"] #features .col-md-4:nth-child(3) .card,
+body[data-page="home"] #how .col-md-4:nth-child(3) .card { --hayat-panel-bg:#fff6e6; --hayat-panel-border:#e8d9b9; }
 .home-stats-header { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:20px 24px; border-bottom:1px solid #e2e8f0; }
 .home-stats-header h2 { font-size:1rem; margin:0; }
 .home-stat { padding:24px; display:flex; align-items:center; gap:16px; }
@@ -55,9 +63,9 @@ body[data-page="home"] .hero-image-panel img { object-position:center; }
 /* Tabler sign-in cover structure: form column + separate illustrated cover. */
 .public-auth .auth-container { max-width:1180px; }
 .public-auth .auth-split { align-items:stretch; max-width:none; }
-.public-auth .auth-form-column { min-width:0; background:#fff; }
+.public-auth .auth-form-column { min-width:0; background:#fff1f2; }
 .public-auth .container-tight { width:100%; max-width:560px; padding:36px 28px; }
-.public-auth .auth-card { border:0; border-radius:0; box-shadow:none; }
+.public-auth .auth-card { border:0; border-radius:0; box-shadow:none; background:transparent; }
 .public-auth .auth-card .card-body { padding:0; }
 .public-auth .auth-steps { font-size:.71rem; }
 .public-auth-cover { background:#f1f8f6; border-inline-start:1px solid #dce9e4; min-width:0; }
@@ -71,10 +79,11 @@ body[data-page="home"] .hero-image-panel img { object-position:center; }
 .public-auth-cover p { color:#405e57; font-size:.88rem; }
 .public-auth-cover .cover-caption { color:#405e57; font-size:.76rem; margin-top:20px; border-top:1px solid #d5e6de; padding-top:18px; }
 .public-auth .demo-inbox h3 { font-size:.97rem; }
+.public-auth .demo-inbox { background:#eaf5ef; border-color:#c9e0d2; }
 .public-auth .auth-form-note { padding-inline:12px; }
 .status-illustration { height:126px; width:180px; max-width:100%; display:block; margin:0 auto 20px; }
 .public-status .result-screen { position:relative; max-width:640px; padding-inline:16px; }
-.public-status .result-screen>.card { background:#fff; }
+.public-status .result-screen>.card { background:var(--hayat-panel-bg); }
 .public-status .result-icon { width:58px; height:58px; font-size:1.8rem; margin-bottom:16px; }
 .public-status .result-icon .ti { font-size:1.8rem; }
 .public-status h1 { font-size:1.65rem; }
@@ -108,6 +117,8 @@ body[data-page="home"] .hero-image-panel img { object-position:center; }
   .public-status h1 { font-size:1.4rem; }
 }
 @media(forced-colors:active) {
+  .public-auth .auth-form-column,.public-auth .demo-inbox,.home-stats .card,.home-stats .home-stat,
+  .public-status .result-screen>.card { color:CanvasText; background:Canvas; border-color:CanvasText; }
   .hero-image-panel figcaption,.hero-image-panel .image-label { color:CanvasText; background:Canvas; border:1px solid CanvasText; padding:8px; }
   .hero-image-panel:after { display:none; }
   .home-stat span,.public-auth-cover h2,.public-auth-cover p,.public-auth-cover .cover-caption { color:CanvasText; }
