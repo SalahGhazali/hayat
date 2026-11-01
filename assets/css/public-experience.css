@@ -1,4 +1,23 @@
 /* Public composition on top of the locally vendored Tabler RTL components. */
+/* Owner's Home refinement: a static, viewport-fixed donation pattern. */
+body[data-page="home"] { isolation:isolate; }
+.home-donation-backdrop {
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:#fff url('../img/backgrounds/donation-pattern.svg') center top / 960px 800px repeat;
+}
+body[data-page="home"] .page { background:transparent; }
+body[data-page="home"] .soft-section { background:rgba(255,255,255,.64); border-color:#eee4e4; }
+body[data-page="home"] .public-hero .btn-outline-secondary { background:#fff; }
+body[data-page="home"] .hero-image-panel { box-shadow:0 18px 46px rgba(115,35,35,.09); border:5px solid #fff; }
+body[data-page="home"] .hero-image-panel .image-label { background:#A91D2A; }
+body[data-page="home"] .hero-image-panel img { object-position:center; }
+@media(max-width:575.98px) {
+  .home-donation-backdrop { background-size:640px 533px; background-position:left top; }
+}
+@media(forced-colors:active),print { .home-donation-backdrop { display:none; } }
 .public-hero { padding:56px 0 42px; }
 .public-hero .lead { color:#526175; }
 .public-hero .hero-actions { margin-block:24px; }
