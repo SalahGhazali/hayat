@@ -13,5 +13,6 @@ for (const entry of await readdir(root, { withFileTypes: true })) {
 for (const directory of ['assets', 'donor', 'bank', 'admin']) {
   await cp(path.join(root, directory), path.join(output, directory), { recursive: true });
 }
+await cp(path.join(root, 'sw.js'), path.join(output, 'sw.js'));
 await writeFile(path.join(output, '.nojekyll'), '');
 console.log('Static site packaged in .site/');
