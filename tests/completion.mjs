@@ -5,6 +5,8 @@ import {mkdir,writeFile} from 'node:fs/promises';
 await mkdir('test-results',{recursive:true});
 const browser=await chromium.launch({channel:'msedge',headless:true});
 const context=await browser.newContext({viewport:{width:1440,height:1000},colorScheme:'dark',timezoneId:'Asia/Jerusalem'});
+// Keep the pre-existing scenarios outside the seed donor's new waiting period.
+await context.addInitScript(()=>{const NativeDate=Date,fixed=NativeDate.parse('2026-11-23T10:00:00Z');globalThis.Date=class extends NativeDate{constructor(...args){super(...(args.length?args:[fixed]))}static now(){return fixed}}});
 const page=await context.newPage(),errors=[],checks=[];
 context.on('page',p=>p.on('pageerror',err=>errors.push(err.message)));
 page.on('pageerror',err=>errors.push(err.message));
@@ -36,12 +38,12 @@ try{
  await expect(page.locator('a[href*="bank/record-donation"]')).toHaveCount(0);
  check('Admin request details opens from its real link and preserves role actions');
 
- await login('staff@hayat.demo');await go('bank/create-request.html');await page.selectOption('#bloodType','O+');await page.fill('#units','1');await page.fill('#radius','10');await page.locator('#request-form [type="submit"]').click();await page.waitForURL('**/bank/request-details.html?id=*');
+ await login('staff@hayat.demo');await go('bank/create-request.html');await page.selectOption('#bloodType','O+');await page.fill('#units','1');await page.locator('#request-form [type="submit"]').click();await page.waitForURL('**/bank/request-details.html?id=*');
  const requestId=new URL(page.url()).searchParams.get('id');
- await expect(page.locator('[data-close="fulfilled"]')).toBeDisabled();
+ await expect(page.locator('[data-close="fulfilled"]')).toHaveCount(0);
  await page.locator('a[href*="donors.html?request="]').click();await expect(page.locator('#table-main')).toContainText('أحمد محمد');
- await expect(page.locator('#table-main tbody tr')).toHaveCount(1);
- await page.locator('a[href*="record-donation.html?donor="]').click();
+ await expect(page.locator('#table-main tbody tr')).toHaveCount(2);
+ await page.locator('a[href*="record-donation.html?donor=demo-donor&"]').click();
  await expect(page.locator('#donorId')).toHaveValue('demo-donor');await expect(page.locator('#requestId')).toHaveValue(requestId);
  check('Request candidates are reachable and recording preselects the donor and same-bank request');
 
@@ -50,7 +52,7 @@ try{
  assert.equal(await donor.evaluate(()=>HayatData.points('demo-donor')),15);
  await go('bank/request-details.html?id='+encodeURIComponent(requestId));await expect(page.locator('#table-main')).toContainText('اعتذر');
  await donor.locator('[data-respond="accepted"]').click();await confirm(donor);
- await go('bank/request-details.html?id='+encodeURIComponent(requestId));await expect(page.locator('#table-main')).toContainText('مقبول');await expect(page.locator('[data-close="fulfilled"]')).toBeDisabled();
+ await go('bank/request-details.html?id='+encodeURIComponent(requestId));await expect(page.locator('#table-main')).toContainText('مقبول');await expect(page.locator('[data-close="fulfilled"]')).toHaveCount(0);
  await page.locator('a[href*="record-donation.html?request="]').click();await page.selectOption('#donorId','demo-donor');await page.fill('#reference','COMPLETION-LINKED');await page.check('[name="completed"]');await page.locator('#donation-form [type="submit"]').click();await confirm();await page.waitForURL('**/bank/reports.html');
  await expect(page.locator('#table-bank-points')).toContainText('COMPLETION-LINKED');
  await expect(donor.locator('#view-content')).toContainText('1');
@@ -64,13 +66,13 @@ try{
  await page.screenshot({path:'test-results/completed-bank-report-desktop.png',fullPage:true});
  check('Bank points ledger stays scoped, filters by reference, exports the intended table and survives donation-status filters');
 
- await go('bank/request-details.html?id='+encodeURIComponent(requestId));await expect(page.locator('[data-close="fulfilled"]')).toBeEnabled();await page.locator('[data-close="fulfilled"]').click();await reason('تم توثيق الوحدة المطلوبة في التجربة');
- await expect(page.locator('#view-content')).toContainText('مستوفى');await expect(donor.locator('[data-respond]')).toHaveCount(0);await expect(donor.locator('#view-content')).toContainText('تم توثيق الوحدة المطلوبة');
+ await go('bank/request-details.html?id='+encodeURIComponent(requestId));await expect(page.locator('[data-close="fulfilled"]')).toHaveCount(0);
+ await expect(page.locator('#view-content')).toContainText('مستوفى');await expect(donor.locator('[data-respond]')).toHaveCount(0);await expect(donor.locator('#view-content')).toContainText('أُغلقت تلقائيًا');
  await page.locator('a[href*="reports.html?request="]').click();await expect(page.locator('#table-main tbody tr')).toHaveCount(1);await expect(page.locator('#table-main')).toContainText('COMPLETION-LINKED');
  await expect(page.locator('[data-correct]')).toHaveCount(0);const donationId=await page.evaluate(()=>HayatData.read().donations.find(d=>d.reference==='COMPLETION-LINKED').id);await login('admin@hayat.demo');await go('admin/donations.html');await page.locator(`[data-correct="${donationId}"]`).click();await reason('تصحيح تجريبي بعد إغلاق الطلب');await login('staff@hayat.demo');await go('bank/reports.html?request='+encodeURIComponent(requestId));
  await expect(page.locator('#table-bank-points')).toContainText('-5');assert.equal(await donor.evaluate(()=>HayatData.points('demo-donor')),15);
  await go('bank/record-donation.html?request='+encodeURIComponent(requestId));await expect(page.locator('#view-content')).toContainText('الطلب غير متاح للتوثيق');await expect(page.locator('#donation-form')).toHaveCount(0);
- check('Fulfilled closure needs a confirmed unit; closed donor actions disappear; filtered request history preserves auditable correction');
+ check('The last confirmed unit automatically closes the campaign; closed donor actions disappear; filtered request history preserves auditable correction');
 
  await login('bank2@hayat.demo');await go('bank/reports.html');await expect(page.locator('#table-main')).toContainText('SYNTH-2');await expect(page.locator('#view-content')).not.toContainText('COMPLETION-LINKED');
  await go('bank/donors.html?request='+encodeURIComponent(requestId));await expect(page.locator('#view-content')).toContainText('الطلب غير متاح');await expect(page.locator('a[href*="record-donation.html?donor="]')).toHaveCount(0);
@@ -98,7 +100,7 @@ try{
  check('Registration accepts Arabic phone digits and today’s date; stale verification cannot reactivate a suspended account; Arabic OTP works');
 
  const freshDonorId=await page.evaluate(()=>Hayat.currentUser().id);
- await login('staff@hayat.demo');await go('bank/record-donation.html');await page.selectOption('#donorId',freshDonorId);await page.selectOption('#requestId','');await page.fill('#reference','PUBLIC-NEW-DONOR-WALKIN');await page.check('[name="completed"]');await page.locator('#donation-form [type="submit"]').click();await confirm();await page.waitForURL('**/bank/reports.html');
+ await login('staff@hayat.demo');await go('bank/record-donation.html');await page.selectOption('#donorId',freshDonorId);await page.locator('[data-record-blood-type]').click();await page.selectOption('#exam-blood-type','O+');await page.fill('#exam-reference','COMPLETION-BLOOD-RESULT');await page.check('#exam-confirmed');await page.locator('#blood-type-form [type="submit"]').click();await page.locator('#blood-type-form').waitFor({state:'detached'});await page.selectOption('#requestId','');await page.fill('#reference','PUBLIC-NEW-DONOR-WALKIN');await page.check('[name="completed"]');await page.locator('#donation-form [type="submit"]').click();await confirm();await page.waitForURL('**/bank/reports.html');
  assert.equal(await page.evaluate(id=>HayatData.points(id),freshDonorId),5);await login('completion@synthetic.demo',page,'Test12345!');await go('donor/history.html');await expect(page.locator('#table-main')).toContainText('PUBLIC-NEW-DONOR-WALKIN');await expect(page.locator('#table-main tbody tr')).toHaveCount(1);
  check('A newly registered public donor is found by staff, receives a direct donation without a request, and sees +5 and confirmed history');
 

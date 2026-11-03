@@ -10,7 +10,12 @@
     "test:logout": "node tests/logout.mjs",
     "test:completion": "node tests/completion.mjs",
     "test:commitment": "node tests/commitment.mjs",
-    "test:alignment": "node tests/alignment.mjs"
+    "test:alignment": "node tests/alignment.mjs",
+    "test:appointments": "node tests/appointments.mjs",
+    "test:invitations": "node tests/invitations.mjs",
+    "test:bank-notifications": "node tests/bank-notifications.mjs",
+    "test:feedback": "node tests/action-feedback.mjs",
+    "test:voluntary": "node tests/voluntary.mjs"
   },
   "devDependencies": {
     "@fontsource/cairo": "5.3.0",

@@ -13,7 +13,7 @@
 | حقول النماذج | `form-control` و`form-select` و`form-check` مع رسائل عربية وحفظ الإدخال الصحيح عند الخطأ | [Tabler forms](https://docs.tabler.io/ui) |
 | تحرير بيانات وسبب الإجراء | `modal-dialog-centered` و`modal-dialog-scrollable` و`tabler.Modal` | [Tabler modal](https://docs.tabler.io/ui/components/modal) |
 | تأكيد العمليات | `Hayat.confirmDialog()` باستخدام SweetAlert2، بما فيه الخروج والتبرع والتراجع | [SweetAlert2](https://github.com/sweetalert2/sweetalert2/tree/v11.17.2) |
-| رسائل النجاح والخطأ القصيرة | `toast` و`tabler.Toast` عبر `Hayat.toast()`؛ الخروج مرة واحدة لمدة 3 ثوانٍ | [Tabler toasts](https://preview.tabler.io/toasts.html) |
+| رسائل النجاح والخطأ القصيرة | `toast` و`tabler.Toast` عبر `Hayat.toast()`؛ نجاح الإجراءات والخروج لمدة 3 ثوانٍ، مع زر إغلاق. `navigateWithSuccess()` ينقل نجاح الحفظ للصفحة المقصودة مرة واحدة دون تكرار عند التحديث | [Tabler toasts](https://preview.tabler.io/toasts.html) |
 | الحالات الفارغة | `empty` و`empty-title` و`empty-action` مع إجراء مناسب | [Tabler empty state](https://preview.tabler.io/empty.html) |
 | حالات النظام | `status.html` للتفعيل والاستعادة و403 و404 والخطأ المؤقت، مع الرسم الزخرفي المحلي | [Tabler free templates](https://github.com/tabler/tabler) |
 | الأيقونات | Tabler Icons Webfont المحلي؛ لا رموز تعبيرية بديلة | [Tabler Icons](https://github.com/tabler/tabler-icons) |

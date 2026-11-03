@@ -5,6 +5,8 @@ import {mkdir,writeFile} from 'node:fs/promises';
 await mkdir('test-results',{recursive:true});
 const browser=await chromium.launch({channel:'msedge',headless:true});
 const context=await browser.newContext({viewport:{width:1440,height:1000},colorScheme:'dark',timezoneId:'Asia/Jerusalem'});
+// Keep the pre-existing scenarios outside the seed donor's new waiting period.
+await context.addInitScript(()=>{const NativeDate=Date,fixed=NativeDate.parse('2026-11-23T10:00:00Z');globalThis.Date=class extends NativeDate{constructor(...args){super(...(args.length?args:[fixed]))}static now(){return fixed}}});
 const checks=[],errors=[],base='http://localhost:8000/';
 context.on('page',page=>page.on('pageerror',error=>errors.push(error.message)));
 context.on('response',response=>{
@@ -36,7 +38,6 @@ async function createRequest(label){
  await go(bank,'bank/create-request.html');
  await bank.selectOption('#bloodType','O+');
  await bank.fill('#units','1');
- await bank.fill('#radius','10');
  await bank.fill('[name="notes"]',label);
  await bank.locator('#request-form [type="submit"]').click();
  await bank.waitForURL('**/bank/request-details.html?id=*');

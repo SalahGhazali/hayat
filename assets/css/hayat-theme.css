@@ -334,3 +334,10 @@ html:not(.js-motion) [data-aos] { opacity:1!important; transform:none!important;
 @keyframes hayat-shimmer { to { opacity:.45; } }
 @media (prefers-reduced-motion:reduce) { [data-aos] { opacity:1!important; transform:none!important; pointer-events:auto!important; } }
 @media (forced-colors:active) { .hayat-confirm { border:1px solid CanvasText; } .loading-skeleton .skeleton-line { border:1px solid CanvasText; } }
+[data-donation-cooldown].alert-warning { color: #62420e; }
+.bank-notification-message { min-width: 240px; max-width: 38rem; overflow-wrap: anywhere; }
+.bank-notification-time { min-width: 8rem; }
+.bank-notification-actions { min-width: 13rem; }
+.bank-topbar-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 14px; margin-inline-start: auto; max-width: 100%; }
+.bank-topbar-actions [data-bank-notifications] { flex-shrink: 0; }
+[data-blood-type-guidance].alert-info { color: #274c65; }

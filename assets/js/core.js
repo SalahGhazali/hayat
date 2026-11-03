@@ -19,10 +19,26 @@ const setSession=u=>window.HayatData?window.HayatData.setSession(u):storage.sess
 const dashboardFor=u=>`${['admin','bank'].includes(u?.role)?u.role:'donor'}/dashboard.html`;
 const icon=n=>`<i class="ti ti-${n}" aria-hidden="true"></i>`;
 const brand=()=>`<a class="brand-lockup text-decoration-none" href="${url('index.html')}" aria-label="حياة — الرئيسية"><img class="symbol-logo" src="${url('assets/img/hayat-logo-symbol.png')}" alt=""><span><strong>حياة</strong><small>HAYAT</small></span></a>`;
-function toast(message,type='success',{delay=5000}={}){
+function toast(message,type='success',{delay=type==='success'?3000:5000}={}){
  let box=$('#toast-container');if(!box){box=document.createElement('div');box.id='toast-container';box.className='toast-container';box.setAttribute('aria-live','polite');document.body.append(box)}
- const el=document.createElement('div');el.className=`toast ${type}`;el.setAttribute('role','status');el.innerHTML=`<div class="toast-body">${icon(type==='error'?'alert-circle':type==='warning'?'alert-triangle':'circle-check')}<span>${safe(message)}</span><button class="btn-close ms-auto" type="button" aria-label="إغلاق التنبيه" data-bs-dismiss="toast"></button></div>`;box.append(el);
+ const el=document.createElement('div');el.className=`toast ${type}`;el.dataset.feedback=type;el.setAttribute('role','status');el.innerHTML=`<div class="toast-body">${icon(type==='error'?'alert-circle':type==='warning'?'alert-triangle':'circle-check')}<span>${safe(message)}</span><button class="btn-close ms-auto" type="button" aria-label="إغلاق التنبيه" data-bs-dismiss="toast"></button></div>`;box.append(el);
  const t=new tabler.Toast(el,{delay});el.addEventListener('hidden.bs.toast',()=>{t.dispose();el.remove()},{once:true});t.show();return el;
+}
+function navigateWithSuccess(destination,message){
+ const target=new URL(destination,location.href);
+ storage.sessionSet('success_notice',{message,path:target.pathname+target.search,userId:currentUser()?.id||null,createdAt:Date.now()});
+ location.href=target.href;
+}
+function showPendingSuccess(){
+ const notice=storage.sessionGet('success_notice');storage.sessionDel('success_notice');
+ if(!notice||notice.path!==location.pathname+location.search||notice.userId!==(currentUser()?.id||null)||Date.now()-notice.createdAt<0||Date.now()-notice.createdAt>=30000)return;
+ const page=document.body.dataset.page,user=currentUser();if(['donor','bank','admin'].includes(page)&&(!user?.verified||user.status!=='active'||user.role!==page))return;
+ toast(notice.message);
+}
+function bloodTypeGuidance(user){
+ if(user?.role!=='donor'||user.bloodType!=='unknown'||!window.HayatData)return '';
+ const institution=window.HayatData.nearbyBanks(user)[0],canRequest=user.verified&&user.status==='active';
+ return `<section class="alert alert-info mb-4" data-blood-type-guidance><div><h2 class="h3 mb-2">لا تعرف فصيلة دمك؟</h2><p class="mb-2">يرجى مراجعة مؤسسة مختصة لإجراء فحص فصيلة الدم، ليسجّل الموظف نتيجتك في حسابك.</p>${institution?`<p class="mb-2">مؤسسة مقترحة ضمن بيانات العرض: <strong>${safe(institution.name)}</strong> · ${safe(institution.city)}، ${safe(institution.area)}.</p>`:''}<p class="small mb-2">ترتيب القرب تجريبي حسب المنطقة المسجلة؛ لا يعتمد على موقعك الفعلي.</p>${canRequest?`<a class="btn btn-outline-primary" href="${url('donor/voluntary-donation.html?kind=blood_type_check'+(institution?'&bank='+encodeURIComponent(institution.id):''))}">طلب موعد لفحص الفصيلة</a>`:'<p class="small mb-0">بعد تأكيد البريد يمكنك اختيار المؤسسة وطلب موعد للفحص.</p>'}</div></section>`;
 }
 function alertForm(message,type='error'){const el=$('#form-alert');if(!el)return toast(message,type);el.className='form-alert visible '+type;el.innerHTML=`${icon('info-circle')}<span>${safe(message)}</span>`;el.scrollIntoView({block:'nearest'});}
 function clearFormErrors(form){$$('.field-error',form).forEach(e=>e.textContent='');$$('.invalid',form).forEach(e=>{e.classList.remove('invalid');e.removeAttribute('aria-invalid')});const el=$('#form-alert');if(el){el.className='form-alert';el.textContent=''}}
@@ -38,7 +54,7 @@ async function confirmDialog({title='هل أنت متأكد؟',description='',co
  if(offcanvas&&drawer.isConnected){drawer.addEventListener('shown.bs.offcanvas',()=>previous?.focus(),{once:true});offcanvas.show()}
  return false;
 }
-function completeLogout(){clearSession();storage.sessionSet('logout_notice',{createdAt:Date.now()});location.replace(url('login.html'))}
+function completeLogout(){clearSession();storage.sessionDel('success_notice');storage.sessionSet('logout_notice',{createdAt:Date.now()});location.replace(url('login.html'))}
 function logout(){confirmDialog({title:'تسجيل الخروج',description:'هل تريد إنهاء الجلسة التجريبية الحالية؟',confirm:'تسجيل الخروج',onConfirm:completeLogout})}
 function initChrome(){const user=currentUser();const header=$('#site-header');if(header)header.innerHTML=`<a class="skip-link" href="#main-content">تجاوز إلى المحتوى</a><div class="demo-strip">${icon('info-circle')} نموذج واجهات تجريبي — استخدم بيانات وهمية فقط</div><header class="navbar navbar-expand-lg public-header"><div class="container-xl">${brand()}<button type="button" class="navbar-toggler ms-auto d-lg-none" data-bs-toggle="collapse" data-bs-target="#public-menu" aria-expanded="false" aria-controls="public-menu" aria-label="فتح القائمة"><span class="navbar-toggler-icon"></span></button><nav class="collapse navbar-collapse" id="public-menu" aria-label="التنقل الرئيسي"><ul class="navbar-nav mx-lg-auto"><li class="nav-item"><a class="nav-link" href="${url('index.html')}#how">كيف تعمل حياة؟</a></li><li class="nav-item"><a class="nav-link" href="${url('index.html')}#features">لماذا حياة</a></li><li class="nav-item"><a class="nav-link" href="${url('index.html')}#roles">للمتبرعين والمؤسسات</a></li></ul><div class="d-flex flex-wrap gap-2 py-2">${user?`<a class="btn btn-primary" href="${url(dashboardFor(user))}">${icon('layout-dashboard')} لوحتي</a><button class="btn btn-outline-secondary" type="button" data-logout>خروج</button>`:`<a class="btn btn-outline-secondary" href="${url('login.html')}">تسجيل الدخول</a><a class="btn btn-primary" href="${url('register.html')}">انضم كمتبرع</a>`}</div></nav></div></header>`;
  $$('[data-logout]',header||document).forEach(b=>b.onclick=logout);
@@ -51,6 +67,6 @@ const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMon
 function validPastDate(value){if(!/^\d{4}-\d{2}-\d{2}$/.test(String(value)))return false;const date=new Date(value+'T12:00:00Z');return !Number.isNaN(date.getTime())&&date.toISOString().slice(0,10)===value&&value<=today()}
 async function passwordHash(pass,salt){const str='hayat-demo-only:'+salt+':'+pass;if(globalThis.crypto?.subtle){const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('')}let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(16)}
 function requireUser(role){const u=currentUser();if(!u){location.replace(url('login.html'));return null}if(!u.verified||u.status!=='active'||u.role!==role){location.replace(url('status.html?type=denied'));return null}return u}
-window.Hayat={prefix:PREFIX,$,$$,safe,url,storage,demos,DEMO_PASSWORD,allUsers,saveUser,getSession,currentUser,setSession,clearSession,dashboardFor,toast,alertForm,clearFormErrors,fieldError,confirmDialog,normalDigits,normalPhone,emailVal,randomCode,passwordHash,requireUser,logout,completeLogout,brand,icon,today,validPastDate};
-document.addEventListener('DOMContentLoaded',()=>{initChrome();$$('#site-header a[href$="#how"], #site-footer a[href$="#how"]').forEach(a=>a.href=url('how-it-works.html'))});
+window.Hayat={prefix:PREFIX,$,$$,safe,url,storage,demos,DEMO_PASSWORD,allUsers,saveUser,getSession,currentUser,setSession,clearSession,dashboardFor,toast,navigateWithSuccess,showPendingSuccess,bloodTypeGuidance,alertForm,clearFormErrors,fieldError,confirmDialog,normalDigits,normalPhone,emailVal,randomCode,passwordHash,requireUser,logout,completeLogout,brand,icon,today,validPastDate};
+document.addEventListener('DOMContentLoaded',()=>{initChrome();showPendingSuccess();$$('#site-header a[href$="#how"], #site-footer a[href$="#how"]').forEach(a=>a.href=url('how-it-works.html'))});
 })();

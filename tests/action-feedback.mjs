@@ -1,0 +1,41 @@
+import {chromium,expect} from 'playwright/test';
+import assert from 'node:assert/strict';
+import {mkdir,writeFile} from 'node:fs/promises';
+
+await mkdir('test-results',{recursive:true});
+const browser=await chromium.launch({channel:'msedge',headless:true});
+const context=await browser.newContext({viewport:{width:1440,height:1000},timezoneId:'Asia/Jerusalem',reducedMotion:'reduce'});
+const base='http://localhost:8000/',checks=[],errors=[];
+await context.route('**/*',route=>route.request().url().startsWith(base)?route.continue():route.abort());
+context.on('page',page=>{page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.text().startsWith('Hayat demo data unavailable'))errors.push(m.text())})});
+context.on('response',r=>{if(r.url().startsWith(base)&&r.status()>=400)errors.push(`${r.status()} ${r.url()}`)});
+await context.addInitScript(()=>{const NativeDate=Date,fixed=NativeDate.parse('2026-11-03T10:00:00Z');globalThis.Date=class extends NativeDate{constructor(...args){super(...(args.length?args:[fixed]))}static now(){return fixed}}});
+const bank=await context.newPage(),donor=await context.newPage();
+const success=page=>page.locator('.toast.success');
+const go=async(page,path)=>{await page.goto(base+path);await page.locator('#view-content').waitFor()};
+const check=message=>{checks.push(message);console.log(message)};
+async function login(page,email){await page.goto(base+'login.html');await page.fill('#identifier',email);await page.fill('#password','Demo12345!');await page.locator('#login-form [type="submit"]').click();await page.waitForURL(/\/(bank|donor)\/dashboard.html$/);await expect(success(page)).toContainText('تم تسجيل الدخول');await dismiss(page)}
+async function dismiss(page){for(const popup of await success(page).all()){await popup.locator('[data-bs-dismiss="toast"]').click()}await expect(success(page)).toHaveCount(0)}
+async function confirm(page){await page.locator('.swal2-popup [data-confirm]').click();await page.locator('.swal2-popup').waitFor({state:'hidden'})}
+async function cancel(page){await page.locator('.swal2-popup .swal2-cancel').click();await page.locator('.swal2-popup').waitFor({state:'hidden'})}
+
+try{
+ await bank.goto(base+'login.html');await bank.fill('#identifier','staff@hayat.demo');await bank.fill('#password','wrong-password');await bank.locator('#login-form [type="submit"]').click();await expect(bank.locator('#form-alert')).toBeVisible();await expect(success(bank)).toHaveCount(0);
+ await login(bank,'staff@hayat.demo');await bank.reload();await expect(success(bank)).toHaveCount(0);
+ await go(bank,'bank/create-request.html');await bank.selectOption('#bloodType','A+');await bank.fill('#units','1');await bank.locator('#request-form [type="submit"]').click();await bank.waitForURL('**/bank/request-details.html?id=*');await expect(success(bank)).toContainText('تم نشر الحملة بنجاح');const requestId=new URL(bank.url()).searchParams.get('id');assert.equal(await bank.evaluate(()=>Hayat.storage.sessionGet('success_notice')),null);await bank.reload();await expect(success(bank)).toHaveCount(0);
+ check('Login and campaign publication display success after navigation exactly once; wrong credentials show no success');
+ await go(bank,'bank/donors.html?request='+requestId);const row=id=>bank.locator(`[data-invite-donor="${id}"]`);await row('demo-donor-o-negative').click();await cancel(bank);await expect(success(bank)).toHaveCount(0);assert.equal(await bank.evaluate(id=>HayatData.read().notifications.filter(n=>n.requestId===id&&n.type==='donation_invitation').length,requestId),0);
+ await row('demo-donor-a-positive').click();await confirm(bank);await expect(success(bank)).toContainText('تم إرسال دعوة التبرع');await dismiss(bank);
+ await login(donor,'a-positive@hayat.demo');await go(donor,'donor/request-details.html?id='+requestId);await donor.locator('[data-respond="accepted"]').click();await confirm(donor);await expect(success(donor)).toContainText('تم قبول طلب التبرع');await dismiss(donor);
+ await go(bank,'bank/request-details.html?id='+requestId);await bank.locator('[data-schedule-appointment]').click();await bank.fill('#appointment-time','2026-11-04T13:00');await bank.locator('#appointment-form [type="submit"]').click();await bank.locator('#appointment-form').waitFor({state:'detached'});await expect(success(bank)).toContainText('تم إرسال الموعد');await dismiss(bank);await donor.locator('[data-accept-appointment]').click();await confirm(donor);await expect(success(donor)).toContainText('تم قبول الموعد');await dismiss(donor);
+ await bank.locator('[data-complete-response]').click();await cancel(bank);await expect(success(bank)).toHaveCount(0);assert.equal(await bank.evaluate(()=>HayatData.points('demo-donor-a-positive')),0);
+ await bank.locator('[data-complete-response]').click();await confirm(bank);await expect(success(bank)).toContainText('تم تسجيل التبرع بنجاح');assert.equal(await bank.evaluate(()=>HayatData.points('demo-donor-a-positive')),5);assert.equal(await success(bank).evaluate(el=>tabler.Toast.getInstance(el)._config.delay),3000);await bank.screenshot({path:'test-results/action-feedback-donation.png',fullPage:true});await expect(success(bank)).toHaveCount(0,{timeout:4500});await bank.reload();await expect(success(bank)).toHaveCount(0);
+ check('Inviting, accepting and saving appointments show contextual toasts; canceled actions do not; actual donation shows a dismissible success that expires after about three seconds');
+ await go(bank,'bank/record-donation.html?donor=demo-donor-o-negative');await bank.fill('#reference','FEEDBACK-DIRECT');await bank.check('[name="completed"]');await bank.locator('#donation-form [type="submit"]').click();await confirm(bank);await bank.waitForURL('**/bank/reports.html');await expect(success(bank)).toContainText('تم تسجيل التبرع بنجاح');await bank.reload();await expect(success(bank)).toHaveCount(0);await go(bank,'bank/reports.html?recorded=1');await expect(success(bank)).toHaveCount(0);
+ await go(bank,'bank/record-donation.html?donor=demo-donor-o-negative');await bank.fill('#reference','FEEDBACK-DIRECT');await bank.check('[name="completed"]');await bank.locator('#donation-form [type="submit"]').click();await confirm(bank);await expect(bank.locator('#form-alert')).toContainText('منع التكرار');await expect(success(bank)).toHaveCount(0);assert.equal(await bank.evaluate(()=>HayatData.points('demo-donor-o-negative')),5);
+ check('General donation recording survives its redirect with one success; reload and a manually entered query cannot replay it, and duplicate donation errors never show success');
+ await go(bank,'bank/profile.html');await bank.locator('#profile-form [type="submit"]').click();await expect(success(bank)).toContainText('تم حفظ بياناتك');await dismiss(bank);await bank.setViewportSize({width:320,height:1000});await bank.locator('[data-refresh]').click();await expect(success(bank)).toContainText('تم تحديث البيانات');const bounds=await success(bank).boundingBox();assert.ok(bounds.x>=0&&bounds.x+bounds.width<=320);assert.equal(await bank.evaluate(()=>document.documentElement.scrollWidth),320);await bank.screenshot({path:'test-results/action-feedback-mobile.png',fullPage:true});await dismiss(bank);
+ await go(bank,'bank/create-request.html');await bank.selectOption('#bloodType','O-');await bank.locator('#request-form [type="submit"]').click();await bank.waitForURL('**/bank/request-details.html?id=*');await dismiss(bank);await bank.locator('[data-close="cancelled"]').click();await bank.fill('#reason','إلغاء حملة لاختبار رسالة نجاح الإجراء');await bank.locator('#reason-form [type="submit"]').click();await bank.locator('#reason-form').waitFor({state:'detached'});await expect(success(bank)).toContainText('تم إلغاء الحملة');
+ check('Profile, refresh and campaign cancellation show specific compact messages; the popup fits mobile and can be closed manually');
+ assert.deepEqual(errors,[]);await writeFile('test-results/action-feedback.json',JSON.stringify({checks,errors},null,2));console.log(`Passed ${checks.length} action feedback groups.`);
+}catch(error){console.log(JSON.stringify({bankUrl:bank.url(),donorUrl:donor.url(),errors,body:await bank.locator('body').innerText()},null,2));throw error}finally{await browser.close()}
